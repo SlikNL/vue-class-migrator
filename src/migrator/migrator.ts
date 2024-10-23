@@ -34,18 +34,24 @@ const migrateTsFile = async (project: Project, sourceFile: SourceFile): Promise<
   try {
     const migrationManager = createMigrationManager(sourceFile, outFile);
 
+    // NOTE: Order along to Vue style guide: https://ja.vuejs.org/style-guide/rules-recommended.html
     migrateImports(migrationManager.outFile);
+    // Structures(extends, mixins)
     migrateExtends(migrationManager.clazz, migrationManager.mainObject);
+    // Interfaces(emits, props)
     migrateProps(migrationManager);
     migratePropSyncs(migrationManager);
+    // Local states(data, computed)
     migrateData(migrationManager.clazz, migrationManager.mainObject);
     migrateGetters(migrationManager);
     migrateSetters(migrationManager.clazz, migrationManager.mainObject);
+    migrateRefs(migrationManager);
+    // Callbacks triggered reactively
     migrateWatchers(migrationManager);
+    // Non-reactive properties(methods)
     migrateMethods(migrationManager.clazz, migrationManager.mainObject);
     migrateModels(migrationManager);
     migrateModelSyncs(migrationManager);
-    migrateRefs(migrationManager);
     migrateVuexDecorators(migrationManager);
   } catch (error) {
     await outFile.deleteImmediately();

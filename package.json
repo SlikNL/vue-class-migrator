@@ -34,8 +34,8 @@
   ],
   "dependencies": {
     "commander": "^12.1.0",
-    "ts-morph": "^24.0.0",
-    "winston": "^3.15.0"
+    "consola": "^3.2.3",
+    "ts-morph": "^24.0.0"
   },
   "devDependencies": {
     "@types/eslint": "8.44.2",

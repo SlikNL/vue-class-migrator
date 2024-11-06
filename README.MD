@@ -21,11 +21,14 @@ npm install -g vue-class-migrator
 
 Accepted options
 - -d: Specifies the directory you want to migrate.
+- -f: Specifies the file you want to migrate.
 - --sfc: (Optional flag, default: false) Removes original TS and style files, generating a final Vue Single File Component (SFC).
 
 ```
 npm run migrate -- -d <your_path>
 ```
+
+Target specification should be either `-d` or `-f` .
 
 ### Considerations
 

@@ -263,16 +263,16 @@ describe('migrateSingleFile()', () => {
 
   describe('when a file path is a .vue file', () => {
     let migrateFileSpy: jest.SpyInstance;
-    const scriptSource = `'<script lang="ts">',
-'import Vue, { mounted } from '~/lib/helper/fallback-composition-api';',
-'@Component',
-'export default class {}',
-'</script>',
+    const scriptSource = `'<script lang="ts">'
+'import Vue, { mounted } from '~/lib/helper/fallback-composition-api';'
+'@Component'
+'export default class {}'
+'</script>'
 `;
     let sourceFile: SourceFile;
 
     beforeEach(() => {
-      migrateFileSpy = jest.spyOn(migrator, 'migrateFile');
+      migrateFileSpy = jest.spyOn(migrator, 'migrateFile').mockResolvedValue(createSourceFile('', 'vue'));
       process.cwd = jest.fn(() => '/');
       sourceFile = createSourceFile(scriptSource, 'vue');
       Project.prototype.addSourceFileAtPath = jest.fn(() => sourceFile);

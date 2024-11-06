@@ -1,6 +1,6 @@
 import path from 'path';
+import { consola } from 'consola';
 import { Project, SourceFile } from 'ts-morph';
-import logger from './logger';
 
 export const getScriptContent = (vueSourceFile: SourceFile): string | undefined => {
   const scriptTagRegex = /<script[^>]*>([\s\S]*?)<\/script>/;
@@ -33,7 +33,7 @@ const injectScss = (
   const styleTag = vueTemplate.match(/<style.*\/>|<style.*>([\s\S]*)<\/style>/);
 
   if (!styleTag) {
-    logger.warn(
+    consola.warn(
       `Style file found but style tag not present on vue file. The scss file will be deleted.: ${scssSourceFile.getFilePath()}`,
     );
     return vueTemplate;

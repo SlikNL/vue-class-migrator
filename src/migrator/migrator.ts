@@ -5,7 +5,7 @@ import {
   QuoteKind,
   SourceFile,
 } from 'ts-morph';
-import logger from './logger';
+import { consola } from 'consola';
 import migrateProps from './vue-property-decorator/prop';
 import migratePropSyncs from './vue-property-decorator/propSync';
 import migrateModels from './vue-property-decorator/model';
@@ -60,7 +60,7 @@ const migrateTsFile = async (project: Project, sourceFile: SourceFile): Promise<
   return outFile.moveImmediately(sourceFile.getFilePath(), { overwrite: true });
 };
 
-const migrateVueFile = async (project: Project, vueSourceFile: SourceFile) => {
+const migrateVueFile = async (project: Project, vueSourceFile: SourceFile): Promise<SourceFile> => {
   const scriptContent = getScriptContent(vueSourceFile);
   if (!scriptContent) {
     throw new Error('Unable to extract script tag content');
@@ -87,7 +87,7 @@ export const migrateFile = async (
   project: Project,
   sourceFile: SourceFile,
 ): Promise<SourceFile> => {
-  logger.info(`Migrating ${sourceFile.getBaseName()}`);
+  consola.info(`Migrating ${sourceFile.getBaseName()}`);
   if (!sourceFile.getText().includes('@Component')) {
     throw new Error('File already migrated');
   }
@@ -111,8 +111,7 @@ const migrateEachFile = (
 ): Promise<SourceFile>[] => {
   const resolveFileMigration = (s: SourceFile, p: Project) => migrateFile(p, s)
     .catch((err) => {
-      logger.error(`Error migrating ${s.getFilePath()}`);
-      logger.error(err);
+      consola.error(`Error migrating ${s.getFilePath()}`);
       return Promise.reject(err);
     });
 
@@ -143,7 +142,7 @@ export const migrateDirectory = async (directoryPath: string, toSFC: boolean) =>
         && file.getText().includes('@Component'),
     );
 
-  logger.info(
+  consola.info(
     `Migrating directory: ${directoryToMigrate}, ${finalFilesToMigrate.length} Files needs migration`,
   );
 
@@ -162,7 +161,7 @@ export const migrateDirectory = async (directoryPath: string, toSFC: boolean) =>
         (file) => ['.vue'].includes(file.getExtension()),
       );
 
-    logger.info(`Migrating directory: ${directoryToMigrate}, files to SFC`);
+    consola.info(`Migrating directory: ${directoryToMigrate}, files to SFC`);
     await Promise.all(vueFiles.map((f) => vueFileToSFC(project, f)));
   }
 };
@@ -170,7 +169,7 @@ export const migrateDirectory = async (directoryPath: string, toSFC: boolean) =>
 export const migrateSingleFile = async (filePath: string, toSFC: boolean): Promise<void> => {
   const fileExtensionPattern = /.+\.(vue|ts)$/;
   if (!fileExtensionPattern.test(filePath)) {
-    logger.info(`${filePath} can not migrate. Only .vue files are supported.`);
+    consola.info(`${filePath} can not migrate. Only .vue files are supported.`);
     return;
   }
 
@@ -179,17 +178,12 @@ export const migrateSingleFile = async (filePath: string, toSFC: boolean): Promi
   project.addSourceFileAtPath(fileToMigrate);
   const sourceFiles = project.getSourceFiles();
 
-  logger.info(`Migrating file: ${fileToMigrate}`);
-
+  consola.info(`Migrating file: ${fileToMigrate}`);
   const migrationPromises = migrateEachFile(sourceFiles, project);
-  try {
-    await Promise.all(migrationPromises);
-  } catch (error) {
-    return;
-  }
+  await Promise.all(migrationPromises);
 
   if (toSFC) {
-    logger.info(`Migrating file: ${fileToMigrate}, files to SFC`);
+    consola.info(`Migrating file: ${fileToMigrate}, files to SFC`);
     await Promise.all(sourceFiles.map((f) => vueFileToSFC(project, f)));
   }
 };
@@ -201,6 +195,7 @@ export const migrate = async (option: any): Promise<void> => {
   if (!canBeCliOptions(option)) {
     throw new Error('Cli option should be provided. Run --help for more info');
   }
+  consola.info('Start migrating Vue class component');
   const result = new OptionParser(option).parse();
   if (Object.keys(result).includes('file')) {
     const fileModeOption = result as FileModeOption;
@@ -209,4 +204,5 @@ export const migrate = async (option: any): Promise<void> => {
     const directoryModeOption = result as DirectoryModeOption;
     migrateDirectory(directoryModeOption.directory, (directoryModeOption.sfc ?? false));
   }
+  consola.success('Migration succeeded');
 };

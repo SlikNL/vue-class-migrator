@@ -1,6 +1,21 @@
-import { ClassDeclaration, MethodDeclaration, ObjectLiteralExpression } from 'ts-morph';
+import {
+  ClassDeclaration,
+  MethodDeclaration,
+  ObjectLiteralExpression,
+  OptionalKind,
+  ParameterDeclarationStructure,
+} from 'ts-morph';
 import { getObjectProperty } from '../utils';
-import { vueSpecialMethods } from '../config';
+import { lifecycleHooks } from '../config';
+
+/**
+ * Map to method parameters from `MethodDeclaration` instance
+ */
+function toMethodParameters(
+  methodDeclaration: MethodDeclaration,
+): OptionalKind<ParameterDeclarationStructure>[] | undefined {
+  return methodDeclaration.getParameters().map((p) => p.getStructure());
+}
 
 /**
  * Add Vue special methods to the main object
@@ -9,7 +24,7 @@ function appendVueSpecialMethods(
   classDeclaration: ClassDeclaration,
   mainObject: ObjectLiteralExpression,
 ): void {
-  vueSpecialMethods
+  lifecycleHooks
     .filter((m) => classDeclaration.getMethod(m))
     .forEach((m) => {
       const method = classDeclaration.getMethodOrThrow(m);
@@ -19,6 +34,8 @@ function appendVueSpecialMethods(
         isAsync: method.isAsync(),
         returnType: typeNode,
         statements: method.getBodyText(),
+        // In case of Nuxt lifecycle hooks, need to pass parameters
+        parameters: toMethodParameters(method),
       });
     });
 }
@@ -37,7 +54,7 @@ function appendMethods(methods: MethodDeclaration[], mainObject: ObjectLiteralEx
     const typeNode = method.getReturnTypeNode()?.getText();
     methodsObject.addMethod({
       name: method.getName(),
-      parameters: method.getParameters().map((p) => p.getStructure()),
+      parameters: toMethodParameters(method),
       isAsync: method.isAsync(),
       returnType: typeNode,
       statements: method.getBodyText(),
@@ -51,7 +68,7 @@ export default (clazz: ClassDeclaration, mainObject: ObjectLiteralExpression) =>
   const methods = clazz
     .getMethods()
     .filter(
-      (m) => !vueSpecialMethods.includes(m.getName())
+      (m) => !lifecycleHooks.includes(m.getName())
         && !['data'].includes(m.getName())
         && !m.getDecorator('Watch'),
     );

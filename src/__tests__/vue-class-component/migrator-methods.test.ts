@@ -237,4 +237,101 @@ export default defineComponent({
 })`);
     });
   });
+
+  describe('Nuxt special methods', () => {
+    test('Nuxt >= 2.12 fetch goes to root', async () => {
+      const source = `
+@Component
+export default class extends Vue {
+  async fetch() {
+    console.log('fetching...')
+  }
+}`;
+      const expectation = `import { defineComponent } from '~/lib/helper/fallback-composition-api';
+
+export default defineComponent({
+  async fetch() {
+    console.log('fetching...')
+  }
+})`;
+
+      await expectMigration(source, expectation);
+    });
+
+    test('Nuxt < 2.12 fetch goes to root', async () => {
+      const source = `
+@Component
+export default class extends Vue {
+  async fetch({ app, store, route }: Context) {
+    console.log('fetching...', app)
+  }
+}`;
+      const expectation = `import { defineComponent } from '~/lib/helper/fallback-composition-api';
+
+export default defineComponent({
+  async fetch({ app, store, route }: Context) {
+    console.log('fetching...', app)
+  }
+})`;
+
+      await expectMigration(source, expectation);
+    });
+
+    test('`asyncData` goes to root', async () => {
+      const source = `
+@Component
+export default class extends Vue {
+  async asyncData({ req, app, store }) {
+    this.$store.state.app
+  }
+}`;
+      const expectation = `import { defineComponent } from '~/lib/helper/fallback-composition-api';
+      
+export default defineComponent({
+  async asyncData({ req, app, store }) {
+    this.$store.state.app
+  }
+})`;
+
+      await expectMigration(source, expectation);
+    });
+
+    test('Multiple special methods go to root', async () => {
+      const source = `@Component
+export default class extends Vue {
+    created() {
+      console.log("on created");
+    }
+    mounted() {
+      console.log("on mounted");
+    }
+    async fetch() {
+      console.log('fetching...')
+    }
+    doSomething() {
+      console.log("do something");
+    }
+}`;
+
+      const expectation = `import { defineComponent } from '~/lib/helper/fallback-composition-api';
+    
+export default defineComponent({
+  created() {
+    console.log("on created");
+  },
+  mounted() {
+    console.log("on mounted");
+  },
+  async fetch() {
+    console.log('fetching...')
+  },
+  methods: {
+    doSomething() {
+      console.log("do something");
+    }
+  }
+})`;
+      await expectMigration(source, expectation);
+    });
+  });
 });

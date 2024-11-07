@@ -6,7 +6,7 @@
       "target": "ESNext",
       "module": "CommonJS",
       "sourceMap": false,
-      "skipLibCheck": false,
+      "skipLibCheck": true,
       "esModuleInterop": true,
       "moduleResolution": "node",
       "lib": ["es2021"]
